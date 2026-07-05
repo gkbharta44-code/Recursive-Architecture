@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Delper — Recursive Business Architecture</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#0A0E14; --panel:#10151D; --panel2:#141A23; --line:#232B36;
+  --ink:#E8EDF2; --dim:#7A8695; --dim2:#4E5A68;
+  --flow:#4FD1C5; --flow-soft:rgba(79,209,197,.12); --flow-line:rgba(79,209,197,.35);
+  --gate:#E8A33D; --gate-soft:rgba(232,163,61,.10);
+  --alert:#E2574C; --alert-soft:rgba(226,87,76,.10);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Inter",-apple-system,sans-serif; font-size:16px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:"IBM Plex Mono",monospace}
+.wrap{max-width:1080px; margin:0 auto; padding:0 28px}
+
+.topbar{
+  background:var(--panel); border-bottom:1px solid var(--line);
+  font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.08em; text-transform:uppercase;
+  padding:12px 28px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; color:var(--dim);
+}
+.topbar strong{color:var(--flow)}
+
+header{padding:56px 0 20px}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--flow); margin-bottom:16px}
+h1{font-family:"Space Grotesk",sans-serif; font-weight:700; font-size:clamp(2rem,4.5vw,2.9rem); margin:0 0 14px; letter-spacing:-.02em; line-height:1.08}
+.lede{color:var(--dim); font-size:1.02rem; max-width:660px; margin:0 0 8px; line-height:1.7}
+
+section{padding:44px 0; border-top:1px solid var(--line)}
+h2{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:1.5rem; margin:0 0 8px; letter-spacing:-.01em}
+.section-note{color:var(--dim); font-size:.92rem; max-width:680px; margin:0 0 28px; line-height:1.7}
+
+/* ===== SIGNATURE: Circular recursive flow diagram ===== */
+.flow-frame{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px}
+#flowSvg{width:100%; height:auto; display:block}
+.flow-caption{font-family:"IBM Plex Mono",monospace; font-size:.68rem; color:var(--dim2); text-align:center; padding:14px 20px 18px; letter-spacing:.02em}
+.flow-caption strong{color:var(--flow)}
+
+/* ===== Infrastructure stack ===== */
+.stack{display:flex; flex-direction:column; gap:2px; border:1px solid var(--line); border-radius:6px; overflow:hidden}
+.stack-layer{background:var(--panel); display:grid; grid-template-columns:140px 1fr 200px; gap:0; align-items:stretch}
+.stack-layer + .stack-layer{border-top:1px solid var(--line)}
+.stack-tag{
+  background:var(--panel2); display:flex; align-items:center; justify-content:center;
+  font-family:"IBM Plex Mono",monospace; font-size:.64rem; letter-spacing:.06em; text-transform:uppercase; color:var(--flow);
+  padding:14px 10px; text-align:center; border-right:1px solid var(--line);
+}
+.stack-body{padding:14px 20px}
+.stack-body .name{font-weight:600; font-size:.95rem; margin-bottom:4px}
+.stack-body .desc{color:var(--dim); font-size:.82rem; line-height:1.55}
+.stack-num{
+  border-left:1px solid var(--line); display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:14px 12px; font-family:"IBM Plex Mono",monospace;
+}
+.stack-num .v{font-size:1.05rem; font-weight:600; color:var(--flow)}
+.stack-num .l{font-size:.6rem; color:var(--dim2); text-align:center; margin-top:3px; letter-spacing:.03em; text-transform:uppercase}
+
+@media(max-width:720px){
+  .stack-layer{grid-template-columns:1fr}
+  .stack-tag{border-right:none; border-bottom:1px solid var(--line); padding:8px}
+  .stack-num{border-left:none; border-top:1px solid var(--line); flex-direction:row; gap:8px}
+}
+
+/* ===== Grounding table ===== */
+table{width:100%; border-collapse:collapse; font-size:.86rem}
+thead th{
+  font-family:"IBM Plex Mono",monospace; font-size:.62rem; letter-spacing:.05em; text-transform:uppercase;
+  text-align:left; padding:10px 14px; background:var(--panel2); color:var(--dim); font-weight:600; border-bottom:1px solid var(--line);
+}
+tbody td{padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+tbody td:first-child{font-weight:500}
+.tag{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:.62rem; padding:2px 8px; border-radius:3px; letter-spacing:.03em}
+.tag.established{background:rgba(79,209,197,.15); color:var(--flow)}
+.tag.derived{background:var(--gate-soft); color:var(--gate)}
+.tag.assumed{background:var(--alert-soft); color:var(--alert)}
+
+.caution{background:var(--alert-soft); border:1px solid rgba(226,87,76,.3); border-radius:6px; padding:24px 26px; margin-top:8px}
+.caution h3{font-family:"Space Grotesk",sans-serif; color:var(--alert); margin:0 0 10px; font-size:1.05rem}
+.caution p{color:var(--ink); font-size:.88rem; line-height:1.7; margin:0 0 10px}
+.caution p:last-child{margin-bottom:0}
+
+footer{padding:30px 0 48px; border-top:1px solid var(--line)}
+footer p{font-family:"IBM Plex Mono",monospace; font-size:.64rem; color:var(--dim2); text-align:center; line-height:1.8; margin:0}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span>DELPER GCCP HOLDINGS</span>
+  <span><strong>RECURSIVE BUSINESS ARCHITECTURE</strong> · ONBOARDING → SMART CITY LIVING</span>
+  <span>ILLUSTRATIVE · GROUNDED IN v10.3</span>
+</div>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">System Architecture · End-to-End Value Loop</div>
+    <h1>The Recursive Loop:<br>Earn, Live, Repeat</h1>
+    <p class="lede">A resident onboards once. From there, the same wallet watches ads, answers surveys, earns DPR tokens, spends them on rent-free, food-free smart city living, and that spend flows back through the supply chain — restarting the loop. This is the architecture that makes that cycle actually run, layer by layer, with every figure traced to its source.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>The Loop, End to End</h2>
+    <p class="section-note">Six stages, one continuous cycle. Figures shown are Year 21 (terminal state), 2,200 operational smart cities, 6 billion onboarded users — all established elsewhere in the v10.3 model.</p>
+    <div class="flow-frame">
+      <svg id="flowSvg" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="flow-caption">The loop closes at <strong>Supply Chain Fulfillment</strong> → back to <strong>Watch &amp; Earn</strong>: every resident purchase generates a facilitation fee, which funds the next cycle of ad/survey rewards.</div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Infrastructure Stack — What Actually Runs Each Stage</h2>
+    <p class="section-note">Each business-layer stage above is executed by a specific technical layer below. Figures here are re-derived from v10.3's own established per-transaction processing steps (Invoice Oracle, SBC Gate, Hyperledger SLA) using a realistic sharded design — not the platform-wide multiplication that was shown earlier to produce impossible throughput.</p>
+    <div class="stack" id="stackList"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Figure Grounding</h2>
+    <p class="section-note">Every number used in this architecture, labeled by its source.</p>
+    <table>
+      <thead><tr><th>Figure</th><th>Value</th><th>Source</th></tr></thead>
+      <tbody id="groundingBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section style="border-bottom:none">
+  <div class="wrap">
+    <div class="caution">
+      <h3>What This Architecture Fixes, and What It Doesn't Claim</h3>
+      <p><strong>This replaces the earlier flawed calculation</strong> — 6 layers of 6× recursive multiplication previously produced 622.86 million TPS and 27 petabytes/day of storage growth, both physically impossible with any real infrastructure. This architecture instead uses horizontal sharding (200 nodes, each handling its own regional shard) and Layer-2 batching for micro-transactions, producing figures that are large but checkable against real distributed-systems and cryptographic hardware limits.</p>
+      <p><strong>This does not claim the underlying business assumptions are realistic.</strong> The revenue figures flowing through this architecture (digital ad income, supply chain fees) are the same ones flagged elsewhere in v10.3 as requiring implausible market share (14.4× the global ad market, 13.2% of world GDP in facilitation fees). This document fixes the <em>engineering</em> so it wouldn't collapse under its own numbers — it does not independently verify that those numbers reflect an achievable business.</p>
+      <p><strong>None of this infrastructure is built.</strong> As stated in v10.3's own disclaimer: no cities are under construction, no independent audit has been performed, and the GenAI/quantum layers referenced in the surrounding document remain design specifications, not operational systems.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Delper GCCP Holdings · Recursive Business Architecture · Illustrative planning document only<br>Grounded in v10.3 established figures where marked · Derived/assumed figures marked accordingly · Not for distribution</p>
+  </div>
+</footer>
+
+<script>
+// ===== Circular flow diagram =====
+const stages = [
+  { label: "Onboarding", detail: "6B users · KYC/IAH", angle: -90 },
+  { label: "Watch & Earn", detail: "$10.62T/yr ads+surveys", angle: -30 },
+  { label: "Wallet Credit", detail: "$247/mo per resident", angle: 30 },
+  { label: "Smart City Living", detail: "$16.30T/yr benefit paid", angle: 90 },
+  { label: "Supply Chain", detail: "$4.20T/yr facilitation", angle: 150 },
+  { label: "Fulfillment", detail: "goods/services delivered", angle: 210 },
+];
+
+const svg = document.getElementById('flowSvg');
+const cx = 450, cy = 310, r = 220;
+const ns = "http://www.w3.org/2000/svg";
+
+function polarToXY(angleDeg, radius) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
+}
+
+// Draw connecting arcs between consecutive stages
+for (let i = 0; i < stages.length; i++) {
+  const a1 = stages[i].angle;
+  const a2 = stages[(i+1) % stages.length].angle;
+  const p1 = polarToXY(a1, r);
+  const p2 = polarToXY(a2, r);
+  const path = document.createElementNS(ns, 'path');
+  const midAngle = a1 + ((a2 - a1 + 360) % 360) / 2;
+  const midPt = polarToXY(midAngle > 360 ? midAngle - 360 : midAngle, r);
+  const d = `M ${p1.x} ${p1.y} Q ${midPt.x + (midPt.x-cx)*0.15} ${midPt.y + (midPt.y-cy)*0.15} ${p2.x} ${p2.y}`;
+  path.setAttribute('d', d);
+  path.setAttribute('stroke', 'rgba(79,209,197,.4)');
+  path.setAttribute('stroke-width', '2');
+  path.setAttribute('fill', 'none');
+  path.setAttribute('marker-end', 'url(#arrow)');
+  svg.appendChild(path);
+}
+
+// Arrow marker def
+const defs = document.createElementNS(ns, 'defs');
+defs.innerHTML = `<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+  <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(79,209,197,.7)"/>
+</marker>`;
+svg.appendChild(defs);
+
+// Center label
+const centerText1 = document.createElementNS(ns, 'text');
+centerText1.setAttribute('x', cx); centerText1.setAttribute('y', cy - 8);
+centerText1.setAttribute('text-anchor', 'middle');
+centerText1.setAttribute('fill', '#4FD1C5');
+centerText1.setAttribute('font-family', 'Space Grotesk, sans-serif');
+centerText1.setAttribute('font-weight', '700');
+centerText1.setAttribute('font-size', '22');
+centerText1.textContent = 'DPR TOKEN';
+svg.appendChild(centerText1);
+
+const centerText2 = document.createElementNS(ns, 'text');
+centerText2.setAttribute('x', cx); centerText2.setAttribute('y', cy + 16);
+centerText2.setAttribute('text-anchor', 'middle');
+centerText2.setAttribute('fill', '#7A8695');
+centerText2.setAttribute('font-family', 'IBM Plex Mono, monospace');
+centerText2.setAttribute('font-size', '11');
+centerText2.textContent = 'recursive loop';
+svg.appendChild(centerText2);
+
+// Stage nodes
+stages.forEach(stage => {
+  const pos = polarToXY(stage.angle, r);
+  const group = document.createElementNS(ns, 'g');
+
+  const circle = document.createElementNS(ns, 'circle');
+  circle.setAttribute('cx', pos.x); circle.setAttribute('cy', pos.y); circle.setAttribute('r', 8);
+  circle.setAttribute('fill', '#0A0E14'); circle.setAttribute('stroke', '#4FD1C5'); circle.setAttribute('stroke-width', '2');
+  group.appendChild(circle);
+
+  const labelOffset = pos.y < cy ? -20 : (pos.y > cy ? 34 : 8);
+  const textAnchor = pos.x < cx - 20 ? 'end' : (pos.x > cx + 20 ? 'start' : 'middle');
+  const textX = pos.x + (textAnchor === 'end' ? -16 : textAnchor === 'start' ? 16 : 0);
+
+  const label = document.createElementNS(ns, 'text');
+  label.setAttribute('x', textX); label.setAttribute('y', pos.y + labelOffset);
+  label.setAttribute('text-anchor', textAnchor);
+  label.setAttribute('fill', '#E8EDF2');
+  label.setAttribute('font-family', 'Space Grotesk, sans-serif');
+  label.setAttribute('font-weight', '600');
+  label.setAttribute('font-size', '15');
+  label.textContent = stage.label;
+  group.appendChild(label);
+
+  const detail = document.createElementNS(ns, 'text');
+  detail.setAttribute('x', textX); detail.setAttribute('y', pos.y + labelOffset + 18);
+  detail.setAttribute('text-anchor', textAnchor);
+  detail.setAttribute('fill', '#7A8695');
+  detail.setAttribute('font-family', 'IBM Plex Mono, monospace');
+  detail.setAttribute('font-size', '11');
+  detail.textContent = stage.detail;
+  group.appendChild(detail);
+
+  svg.appendChild(group);
+});
+
+// ===== Infrastructure stack =====
+const stackData = [
+  { tag: "L0", name: "Onboarding & Identity", desc: "KYC/AML check, IAH (Invoice Anchor Hash) issuance, wallet creation on Hyperledger. Distributed across 200 regional nodes.", val: "48", lbl: "avg users/sec" },
+  { tag: "L1", name: "Sharded Transaction Layer", desc: "200 nodes, each processing its own regional shard independently — not every node handling every transaction.", val: "1.0M", lbl: "on-chain TPS" },
+  { tag: "L1+", name: "Layer-2 Batching", desc: "Micro-transactions (ad views, survey responses, small wallet credits) settle off-chain in batches of 500, then post as one on-chain settlement.", val: "500M", lbl: "effective txn/sec" },
+  { tag: "L2", name: "Distributed Signing (HSM)", desc: "8 HSM units per node, 200 nodes. Every transaction signed with CRYSTALS-Dilithium post-quantum signatures.", val: "4.0M", lbl: "signing ops/sec" },
+  { tag: "L3", name: "Settlement Gate (SBC)", desc: "5 parallel checks per transfer — source wallet, destination wallet, IAH integrity, network integrity, agent/system integrity — before finality.", val: "5.0M", lbl: "checks/sec" },
+  { tag: "L4", name: "Tiered Storage", desc: "Only settled batches write permanently to Hyperledger. Hot (24h) / warm (90d) / cold (archival) tiers manage the rest.", val: "43.2", lbl: "TB/day on-chain" },
+  { tag: "L5", name: "Node-Independent Self-Healing", desc: "ASHE detects and remediates errors per-node. A confirmed breach on one node triggers containment on that node only — it does not sweep or freeze other nodes.", val: "<120ms", lbl: "detection latency" },
+];
+
+const stackEl = document.getElementById('stackList');
+stackData.forEach(layer => {
+  const div = document.createElement('div');
+  div.className = 'stack-layer';
+  div.innerHTML = `
+    <div class="stack-tag">${layer.tag}</div>
+    <div class="stack-body"><div class="name">${layer.name}</div><div class="desc">${layer.desc}</div></div>
+    <div class="stack-num"><div class="v">${layer.val}</div><div class="l">${layer.lbl}</div></div>
+  `;
+  stackEl.appendChild(div);
+});
+
+// ===== Grounding table =====
+const grounding = [
+  ["6 billion users", "6,000,000,000", "established"],
+  ["Watch Ads + Survey revenue (Y21)", "$10.62T/yr", "established"],
+  ["Resident benefit paid (Y21)", "$16.30T/yr", "established"],
+  ["Supply chain facilitation fee (Y21)", "$4.20T/yr", "established"],
+  ["2,200 smart cities operational", "2,200", "established"],
+  ["Hyperledger certified SLA (baseline)", "50,000 TPS", "established"],
+  ["Sharded platform TPS (200 nodes x 5,000)", "1,000,000 TPS", "derived"],
+  ["L2 batching ratio", "500:1", "derived"],
+  ["HSM units per node", "8", "derived"],
+  ["Per-HSM signing throughput", "2,500 ops/sec", "assumed"],
+  ["Avg. bytes per settled transaction", "500 bytes", "assumed"],
+  ["Onboarding window", "4 years", "assumed"],
+];
+
+const gBody = document.getElementById('groundingBody');
+grounding.forEach(row => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${row[0]}</td><td class="mono">${row[1]}</td><td><span class="tag ${row[2]}">${row[2]}</span></td>`;
+  gBody.appendChild(tr);
+});
+</script>
+</body>
+</html>
